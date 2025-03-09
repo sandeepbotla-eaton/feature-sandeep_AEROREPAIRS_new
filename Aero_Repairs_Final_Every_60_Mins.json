@@ -1,0 +1,237 @@
+{
+    "name": "Aero_Repairs_Final_Every_60_Mins",
+    "properties": {
+        "activities": [
+            {
+                "name": "Until1",
+                "type": "Until",
+                "dependsOn": [
+                    {
+                        "activity": "remove_touch_file",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(greaterOrEquals(variables('wait_count'), pipeline().parameters.WAIT_TIME), equals(activity('CheckFiles').output.resultsets[0].rows[0].FLAG, true))",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "CheckFiles",
+                            "type": "Script",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "ls_sf",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "type": "Query",
+                                        "text": {
+                                            "value": "set input_files='@{pipeline().parameters.INPUT_FILES}';\nset pipeline_name ='@{pipeline().Pipeline}';\nset pipe_runid= '@{pipeline().RunId}';\nset flag = false;\nset file_name = null;\n\ndeclare \n   cur_input_files CURSOR FOR SELECT table1.value \n   FROM table(split_to_table($input_files, '|')) AS table1\n   where table1.value !=''\n   ORDER BY table1.value;\n   val text;\n   query text;\n   rs resultset;\n\nbegin\n\n    for record in cur_input_files do\n        val := record.value;\n        query := ' LIST @ADMIN_DB.CONTROL_@{pipeline().globalParameters.env}.STG_AZ_EATON_TOUCH'||:val;\n        execute immediate query;\n        if (exists (select 1 from table(result_scan(last_query_id())) where\"name\" like '%'||:val)) then\n            set flag = true; \n        else\n            set flag = false;\n            break;\n        end if;\n    end for;\n    if ($flag) then\n        insert into ADMIN_DB.CONTROL_@{pipeline().globalParameters.env}.sf_execution_logs(pipeline_name, pipe_runid, log_entry_type, log_time, query_session_id, message, status)\n        values($pipeline_name, $pipe_runid, 'file exist check', current_timestamp(), current_session(),'File @{pipeline().parameters.INPUT_FILES} was found.','SUCCESS');\n        \n        rs :=(select $flag as flag);\n        return table(rs);\n    end if;\n\n    insert into ADMIN_DB.CONTROL_@{pipeline().globalParameters.env}.sf_execution_logs(pipeline_name, pipe_runid, log_entry_type, log_time, query_session_id, message, status)\n    values($pipeline_name, $pipe_runid, 'file exist check', current_timestamp(), current_session(),'@{pipeline().parameters.INPUT_FILES} file was not found. Continue to wait until pipeline expires in ' || (@{pipeline().parameters.WAIT_TIME} - @{variables('wait_count')} * 5) ||  ' minutes!','SUCCESS');\n\n    rs :=(select $flag as flag);\n    return table(rs);\n \nend;\n\n",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        },
+                        {
+                            "name": "Wait 5 mins",
+                            "type": "Wait",
+                            "dependsOn": [
+                                {
+                                    "activity": "CheckFiles",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "waitTimeInSeconds": {
+                                    "value": "@int('300')",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "Set wait count",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "Set incr",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "wait_count",
+                                "value": {
+                                    "value": "@variables('incr_tmp')",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "Set incr",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "Wait 5 mins",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "incr_tmp",
+                                "value": {
+                                    "value": "@add(variables('wait_count'), 1)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "Set flag",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "CheckFiles",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "flag",
+                                "value": {
+                                    "value": "@activity('CheckFiles').output.resultsets[0].rows[0].FLAG ",
+                                    "type": "Expression"
+                                }
+                            }
+                   
+                        }
+                    ],
+                    "timeout": "0.6:00:00"
+                }
+            },
+            {
+                "name": "If Condition1",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "Until1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@equals(variables('flag'),true)",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "Aero_Repairs_Final",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "Aero_Repairs_Final",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "remove_touch_file",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "remove_touch_file",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "TOUCH_FILES": "<PUT_FILE_LIST_HERE>"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "INPUT_FILES": {
+                "type": "string",
+                "defaultValue": "|/tmp/dh_siebel/logs/raw_layer/Siebel_aerorepairs.tch|/tmp/dh_siebel/logs/raw_layer/siebel_RL.tch"
+            },
+            "WAIT_TIME": {
+                "type": "int",
+                "defaultValue": 15
+            }
+        },
+        "variables": {
+            "wait_count": {
+                "type": "Integer",
+                "defaultValue": 0
+            },
+            "flag": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "file_name": {
+                "type": "String"
+            },
+            "incr_tmp": {
+                "type": "Integer",
+                "defaultValue": 0
+            }
+        },
+        "folder": {
+            "name": "aerorepairs/control flows"
+        },
+        "annotations": []
+    }
+}

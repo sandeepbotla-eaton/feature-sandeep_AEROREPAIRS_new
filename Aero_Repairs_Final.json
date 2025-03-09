@@ -1,0 +1,717 @@
+{
+    
+    "name": "Aero_Repairs_Final",
+    "properties": {
+        "activities": [
+	
+	{
+                "name": "shl_tch_delete",
+                "type": "ExecutePipeline",
+                "dependsOn": [ 
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "touch_file_create_delete",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "TOUCH_FILE":"Siebel_aerorepairs.tch",
+"CREATE_DELETE":"0",
+"TOUCH_PATH":"/tmp/dh_siebel/logs/raw_layer",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"HDFS_TOUCH_PATH":"/aerorepairs/config",
+"APP_FOLDER":"/aerorepairs",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"APP_FOLDER":"/aerorepairs",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,            {
+                "name": "CaptureError",
+                "description": "",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {"activity":"Aero_Repair_Sent_to_doc",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"shl_tch_delete",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Aero_Temp_Table_02",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Analyze_compute_2",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Aero_Repair_Final_QV_Table_1",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Analyze_compute_4",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Aero_Repair_Final_QV_Table2",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Aero_Temp_2Sql_Table01",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Aero_Temp_Table_03",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Aero_Temp_Table_04",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Analyze_compute_1",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Analyze_compute_5",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Aero_temp_table_01",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"Analyze_compute_3",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]},
+{"activity":"shl_create_tch",
+"dependencyConditions": [
+                                                               "Failed"
+                                                           ]}
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                 "typeProperties": {
+                    "variableName": "CaptureError",
+                    "value": {
+                        "value": "@concat('pipeline name: ', activity('shl_tch_delete').Error?.Target, 'message: ', activity('shl_tch_delete').Error?.message, 'pipeline name: ', activity('Analyze_compute_1').Error?.Target, 'message: ', activity('Analyze_compute_1').Error?.message, 'pipeline name: ', activity('Analyze_compute_2').Error?.Target, 'message: ', activity('Analyze_compute_2').Error?.message, 'pipeline name: ', activity('Analyze_compute_3').Error?.Target, 'message: ', activity('Analyze_compute_3').Error?.message, 'pipeline name: ', activity('Analyze_compute_4').Error?.Target, 'message: ', activity('Analyze_compute_4').Error?.message, 'pipeline name: ', activity('Analyze_compute_5').Error?.Target, 'message: ', activity('Analyze_compute_5').Error?.message, 'pipeline name: ', activity('Aero_temp_table_01').Error?.Target, 'message: ', activity('Aero_temp_table_01').Error?.message, 'pipeline name: ', activity('Aero_Temp_2Sql_Table01').Error?.Target, 'message: ', activity('Aero_Temp_2Sql_Table01').Error?.message, 'pipeline name: ', activity('Aero_Temp_Table_02').Error?.Target, 'message: ', activity('Aero_Temp_Table_02').Error?.message, 'pipeline name: ', activity('Aero_Repair_Final_QV_Table2').Error?.Target, 'message: ', activity('Aero_Repair_Final_QV_Table2').Error?.message, 'pipeline name: ', activity('Aero_Temp_Table_03').Error?.Target, 'message: ', activity('Aero_Temp_Table_03').Error?.message, 'pipeline name: ', activity('Aero_Temp_Table_04').Error?.Target, 'message: ', activity('Aero_Temp_Table_04').Error?.message, 'pipeline name: ', activity('shl_create_tch').Error?.Target, 'message: ', activity('shl_create_tch').Error?.message, 'pipeline name: ', activity('Aero_Repair_Sent_to_doc').Error?.Target, 'message: ', activity('Aero_Repair_Sent_to_doc').Error?.message, 'pipeline name: ', activity('Aero_Repair_Final_QV_Table_1').Error?.Target, 'message: ', activity('Aero_Repair_Final_QV_Table_1').Error?.message)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "EmailAlert",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "CaptureError",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "EmailAlert",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": 
+                     {"body": "30 Mins Data refresh failed please check the log and restart the load.\nAction failed, error message[${wf:errorMessage(wf:lastErrorNode())}]", "message": "@concat('pipeline name: ', activity('shl_tch_delete').Error?.Target, 'message: ', activity('shl_tch_delete').Error?.message, 'pipeline name: ', activity('Analyze_compute_1').Error?.Target, 'message: ', activity('Analyze_compute_1').Error?.message, 'pipeline name: ', activity('Analyze_compute_2').Error?.Target, 'message: ', activity('Analyze_compute_2').Error?.message, 'pipeline name: ', activity('Analyze_compute_3').Error?.Target, 'message: ', activity('Analyze_compute_3').Error?.message, 'pipeline name: ', activity('Analyze_compute_4').Error?.Target, 'message: ', activity('Analyze_compute_4').Error?.message, 'pipeline name: ', activity('Analyze_compute_5').Error?.Target, 'message: ', activity('Analyze_compute_5').Error?.message, 'pipeline name: ', activity('Aero_temp_table_01').Error?.Target, 'message: ', activity('Aero_temp_table_01').Error?.message, 'pipeline name: ', activity('Aero_Temp_2Sql_Table01').Error?.Target, 'message: ', activity('Aero_Temp_2Sql_Table01').Error?.message, 'pipeline name: ', activity('Aero_Temp_Table_02').Error?.Target, 'message: ', activity('Aero_Temp_Table_02').Error?.message, 'pipeline name: ', activity('Aero_Repair_Final_QV_Table2').Error?.Target, 'message: ', activity('Aero_Repair_Final_QV_Table2').Error?.message, 'pipeline name: ', activity('Aero_Temp_Table_03').Error?.Target, 'message: ', activity('Aero_Temp_Table_03').Error?.message, 'pipeline name: ', activity('Aero_Temp_Table_04').Error?.Target, 'message: ', activity('Aero_Temp_Table_04').Error?.message, 'pipeline name: ', activity('shl_create_tch').Error?.Target, 'message: ', activity('shl_create_tch').Error?.message, 'pipeline name: ', activity('Aero_Repair_Sent_to_doc').Error?.Target, 'message: ', activity('Aero_Repair_Sent_to_doc').Error?.message, 'pipeline name: ', activity('Aero_Repair_Final_QV_Table_1').Error?.Target, 'message: ', activity('Aero_Repair_Final_QV_Table_1').Error?.message)", "subject": "FAILED: AERO_REPAIRS_Impala", "to": "sagarkjaiswal@eaton.com,kishanashra@eaton.com,neerajpandey@eaton.com"}
+                    
+                }
+            }
+,{
+                "name": "Analyze_compute_1",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"shl_tch_delete",
+"dependencyConditions": [
+                                                    "Succeeded"
+                                                ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/analyse_compute_siebel_1.sql",
+"LOG_FILE":"analyse_compute_siebel_1.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Analyze_compute_2",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"shl_tch_delete",
+"dependencyConditions": [
+                                                    "Succeeded"
+                                                ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/analyse_compute_siebel_2.sql",
+"LOG_FILE":"analyse_compute_siebel_2.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Analyze_compute_3",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"shl_tch_delete",
+"dependencyConditions": [
+                                                    "Succeeded"
+                                                ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/analyse_compute_siebel_3.sql",
+"LOG_FILE":"analyse_compute_siebel_3.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Analyze_compute_4",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"shl_tch_delete",
+"dependencyConditions": [
+                                                    "Succeeded"
+                                                ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/analyse_compute_siebel_4.sql",
+"LOG_FILE":"analyse_compute_siebel_4.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Analyze_compute_5",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"shl_tch_delete",
+"dependencyConditions": [
+                                                    "Succeeded"
+                                                ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/analyse_compute_siebel_5.sql",
+"LOG_FILE":"analyse_compute_siebel_5.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "join_7915",
+                "type": "Wait",
+                "dependsOn": [
+                  {"activity":"Analyze_compute_4",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]},
+{"activity":"Analyze_compute_2",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]},
+{"activity":"Analyze_compute_3",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]},
+{"activity":"Analyze_compute_5",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]},
+{"activity":"Analyze_compute_1",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "waitTimeInSeconds": 1
+                }
+}
+,{
+                "name": "Aero_temp_table_01",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"join_7915",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/Aero_temp_table_01.sql",
+"LOG_FILE":"Aero_temp_table_01.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Aero_Temp_2Sql_Table01",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"Aero_temp_table_01",
+"dependencyConditions": [
+                                                    "Succeeded"
+                                                ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/Aero_temp_2sql_table01.sql",
+"LOG_FILE":"aero_repair_qv_table_02_temp.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Aero_Temp_Table_02",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"Aero_temp_table_01",
+"dependencyConditions": [
+                                                    "Succeeded"
+                                                ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/Aero_temp_table_02.sql",
+"LOG_FILE":"AERO_TEMP_TABLE_02.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Aero_Repair_Final_QV_Table2",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"Aero_Temp_2Sql_Table01",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/AERO_REPAIR_FINAL_TABLE_02.sql",
+"LOG_FILE":"AERO_REPAIR_FINAL_TABLE_02.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Aero_Temp_Table_03",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"Aero_Temp_Table_02",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/Aero_temp_table_03.sql",
+"LOG_FILE":"AERO_TEMP_TABLE_03.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "join_1369",
+                "type": "Wait",
+                "dependsOn": [
+                  {"activity":"Aero_Repair_Final_QV_Table2",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]},
+{"activity":"Aero_Repair_Final_QV_Table_1",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "waitTimeInSeconds": 1
+                }
+}
+,{
+                "name": "Aero_Temp_Table_04",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"Aero_Temp_Table_03",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/Aero_temp_table_04.sql",
+"LOG_FILE":"AERO_TEMP_TABLE_04.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "shl_create_tch",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"join_1369",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "touch_file_create_delete",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "TOUCH_FILE":"Siebel_incr.tch",
+"CREATE_DELETE":"1",
+"TOUCH_PATH":"/tmp/dh_siebel/logs/raw_layer",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"HDFS_TOUCH_PATH":"/aerorepairs/config",
+"APP_FOLDER":"/aerorepairs",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"APP_FOLDER":"/aerorepairs",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "Aero_Repair_Sent_to_doc",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"Aero_Temp_Table_04",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/sent_to_doc.sql",
+"LOG_FILE":"sent_to_doc.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+,{
+                "name": "EmailSuccess",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                   
+                        {"activity":"shl_create_tch",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+                      
+                                   ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "EmailSucess",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": 
+					{"body": "OK: Aerospace Repairs Application loaded successfully.", "subject": "OK: Aerospace Repairs Application loaded successfully.", "to": "sagarkjaiswal@eaton.com,kishanashra@eaton.com,neerajpandey@eaton.com"}
+                }
+            }
+,{
+                "name": "Aero_Repair_Final_QV_Table_1",
+                "type": "ExecutePipeline",
+                "dependsOn": [ {"activity":"Aero_Repair_Sent_to_doc",
+"dependencyConditions": [
+                                            "Succeeded"
+                                        ]}
+				
+				],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "RunQuery",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                       "QRY_FILE":"aerorepairs/sqls/AERO_REPAIR_FINAL_TABLE.sql",
+"LOG_FILE":"AERO_REPAIR_QV_TABLE.log",
+"APP_CONFIG_LINUX_PATH":"appConfig.sh",
+"APP":"aerorepairs",
+"APP_NAME":"AEROREPAIRS",
+"FILE_FORMAT":"FF_PARQ",
+"CONTROL_PIPELINE_NAME":"@pipeline().Pipeline",
+"CONTROL_PIPELINE_RUNID":"@pipeline().RunId",
+"CONTROL_PIPE_RUNID":"@pipeline().RunId",
+"CONNECTION":"",
+"EXECUTION_MODE":"@pipeline().parameters.EXECUTION_MODE"
+                    }
+                }
+}
+        ],
+	 "parameters": {
+            "EXECUTION_MODE": {
+                "type": "string",
+                "defaultValue": "START"
+            }
+        },	
+     "variables": {
+            "CaptureError": {
+                "type": "String"
+            }
+        },
+		 "folder": {
+            "name": "aerorepairs/control flows"
+        },
+        "annotations": []
+    }
+}
